@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HeartGuardAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F1F5F6; --surface:#FFFFFF; --ink:#0F2530; --muted:#51707C; --line:#D3DFE3;
+  --accent:#0B6E7F; --accent-ink:#FFFFFF; --accent-soft:#DDEEF1;
+  --pulse:#E5484D; --grid-fine:#E2EBEE; --grid-bold:#CFDDE2;
+  --good:#1E8E5A; --warn:#B8780A; --bad:#D6383E;
+  --font-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;
+  --font-body:'Instrument Sans','Segoe UI',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0A161B; --surface:#112228; --ink:#E5EFF2; --muted:#8CA9B4; --line:#24414B;
+  --accent:#4CC3D6; --accent-ink:#06222A; --accent-soft:#16363F;
+  --pulse:#FF6B70; --grid-fine:#10252C; --grid-bold:#18343D;
+  --good:#4CCB92; --warn:#E7A93B; --bad:#FF7479; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0A161B; --surface:#112228; --ink:#E5EFF2; --muted:#8CA9B4; --line:#24414B;
+  --accent:#4CC3D6; --accent-ink:#06222A; --accent-soft:#16363F;
+  --pulse:#FF6B70; --grid-fine:#10252C; --grid-bold:#18343D;
+  --good:#4CCB92; --warn:#E7A93B; --bad:#FF7479; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;
+  padding-inline:clamp(16px,4vw,32px)}
+body.has-bar{padding-bottom:84px}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:-0.02em}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1080px;margin-inline:auto}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:18px}
+.brand{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;font-family:var(--font-display);font-weight:800;font-size:1.25rem;letter-spacing:-0.02em}
+.brand svg{width:30px;height:30px;color:var(--pulse)}
+.brand .ai{color:var(--accent)}
+.tag{font-family:var(--font-mono);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface);font-weight:600;transition:transform .12s,background .12s,border-color .12s}
+.btn:hover{border-color:var(--accent)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent}
+.btn.small{padding:8px 14px;font-size:.875rem;border-radius:8px}
+.hero{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:20px;background:
+  repeating-linear-gradient(0deg,var(--grid-bold) 0 1px,transparent 1px 40px),
+  repeating-linear-gradient(90deg,var(--grid-bold) 0 1px,transparent 1px 40px),
+  repeating-linear-gradient(0deg,var(--grid-fine) 0 1px,transparent 1px 8px),
+  repeating-linear-gradient(90deg,var(--grid-fine) 0 1px,transparent 1px 8px),var(--surface)}
+.hero-in{padding:clamp(28px,6vw,64px) clamp(20px,5vw,56px) 8px;display:flex;flex-direction:column;gap:20px;position:relative}
+.eyebrow{font-family:var(--font-mono);font-size:.8125rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.hero h1{font-size:clamp(2.9rem,10vw,6rem);font-weight:800;letter-spacing:-0.045em;line-height:.95}
+.hero h1 .ai{color:var(--accent)}
+.lead{font-size:clamp(1.05rem,2.4vw,1.3rem);max-width:56ch;color:var(--ink)}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-top:6px}
+.ecg{display:block;width:100%;height:auto;margin-top:12px}
+.ecg path{vector-effect:non-scaling-stroke}
+.ecg .base{stroke:var(--pulse);opacity:.28}
+.ecg .scan{stroke:var(--pulse);stroke-dasharray:140 2400;animation:scan 4.2s linear infinite;filter:drop-shadow(0 0 4px var(--pulse))}
+@keyframes scan{from{stroke-dashoffset:140}to{stroke-dashoffset:-2400}}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.fact{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.fact b{font-family:var(--font-mono);font-weight:500;font-size:1.65rem;letter-spacing:-0.02em}
+.fact span{color:var(--muted);font-size:.9rem}
+.section{margin-top:48px;display:flex;flex-direction:column;gap:18px}
+.section h2{font-size:clamp(1.5rem,4vw,2rem)}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.how div{border-top:3px solid var(--accent);padding-top:12px;min-width:0}
+.how h3{font-size:1.1rem;margin-bottom:6px}
+.how p{color:var(--muted)}
+details.about{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:6px 18px}
+details.about summary{cursor:pointer;font-weight:600;padding:12px 0}
+details.about ul{margin:0 0 14px;padding-left:1.1rem;color:var(--muted)}
+details.about li{margin-bottom:6px}
+.disclaimer{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;background:var(--surface);padding:14px 16px;font-size:.9375rem;color:var(--muted)}
+.disclaimer b{color:var(--ink)}
+footer{padding-block:36px 28px;color:var(--muted);font-size:.875rem}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start;padding-bottom:40px}
+.stepper{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:20px}
+.step{flex:1 1 0;min-width:130px;text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.step small{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.step b{font-size:.95rem}
+.step[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft)}
+.step.done small{color:var(--good)}
+.examples{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px;font-size:.9rem;color:var(--muted)}
+.panel h2{font-size:clamp(1.6rem,4vw,2.1rem);margin-bottom:6px}
+.panel>.intro{color:var(--muted);margin-bottom:22px;max-width:60ch}
+.field{border:1px solid var(--line);background:var(--surface);border-radius:16px;padding:20px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.field-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.field-head .lbl{font-family:var(--font-display);font-weight:700;font-size:1.2rem;letter-spacing:-0.01em}
+.field-head .code{font-family:var(--font-mono);font-size:.75rem;color:var(--muted)}
+.help{color:var(--muted);font-size:.95rem;max-width:68ch}
+.help b{color:var(--ink);font-weight:600}
+.choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.choice{position:relative;display:block;min-width:0}
+.choice input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.choice .box{display:flex;flex-direction:column;gap:3px;height:100%;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg);transition:border-color .12s,background .12s}
+.choice .box b{font-size:.98rem}
+.choice .box small{color:var(--muted);font-size:.84rem;line-height:1.35}
+.choice:hover .box{border-color:var(--accent)}
+.choice input:checked+.box{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.choice input:focus-visible+.box{outline:3px solid var(--accent);outline-offset:2px}
+.num{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center}
+.numbox{display:flex;align-items:center;gap:8px}
+.numbox input{width:96px;padding:9px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-family:var(--font-mono);font-size:1.1rem;text-align:right}
+.numbox .u{font-family:var(--font-mono);font-size:.8rem;color:var(--muted);min-width:3.2em}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:0}
+.hints{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;font-size:.84rem;color:var(--muted)}
+.hints .warn{color:var(--warn);font-weight:600}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:24px;flex-wrap:wrap}
+.aside{position:sticky;top:16px;display:flex;flex-direction:column;gap:14px}
+.card{border:1px solid var(--line);background:var(--surface);border-radius:18px;padding:20px}
+.meter-card{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.meter-card h3{font-family:var(--font-mono);font-weight:500;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.gauge{--band:var(--good);display:flex;flex-direction:column;align-items:center}
+.gauge[data-band="low"]{--band:var(--good)} .gauge[data-band="mid"]{--band:var(--warn)} .gauge[data-band="high"]{--band:var(--bad)}
+.gauge svg{width:100%;max-width:300px;height:auto;overflow:visible}
+.gtrack{stroke:var(--line)} .gfill{stroke:var(--band);transition:stroke-dasharray .35s ease,stroke .2s}
+.gpct{font-family:var(--font-mono);font-weight:500;font-size:34px;fill:var(--ink);letter-spacing:-0.03em}
+.gband{font-weight:600;color:var(--band);margin-top:-2px}
+.drivers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.drivers li{display:flex;gap:8px;align-items:center}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.dot.up{background:var(--pulse)} .dot.down{background:var(--accent)}
+.sub{font-size:.8125rem;color:var(--muted)}
+.mbar{display:none}
+.res-head{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:28px;align-items:center}
+.res-head h2{font-size:clamp(1.8rem,5vw,2.6rem);margin-bottom:10px}
+.res-head p{color:var(--muted);max-width:56ch}
+.chart-card{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+.chart-card h3{font-size:1.3rem}
+.axis{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.75rem;color:var(--muted);padding-left:min(46%,260px)}
+.clist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.crow{display:grid;grid-template-columns:min(46%,260px) minmax(0,1fr);gap:12px;align-items:center}
+.cl{display:flex;flex-direction:column;min-width:0}
+.cn{font-weight:600;font-size:.95rem}
+.cv{font-family:var(--font-mono);font-size:.78rem;color:var(--muted);overflow-wrap:anywhere}
+.ctrack{position:relative;height:16px;background:var(--bg);border-radius:8px}
+.ctrack::after{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--line)}
+.cbar{position:absolute;top:2px;bottom:2px;border-radius:6px;min-width:3px}
+.cbar.up{left:50%;background:var(--pulse)} .cbar.down{right:50%;background:var(--accent)}
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px 24px;margin:0;padding:0;list-style:none}
+.answers li{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:6px 0;font-size:.92rem}
+.answers li span:first-child{color:var(--muted)}
+.answers li span:last-child{font-family:var(--font-mono);font-size:.85rem;text-align:right}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;align-items:center}
+.toast{font-size:.875rem;color:var(--good)}
+.sg{margin-top:6px}
+.sg h4{font-family:var(--font-display);font-size:1rem;margin:0 0 8px}
+.sg ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.sg li{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.sg li span{color:var(--muted);font-size:.92rem}
+.sg-doctor li{border-left:4px solid var(--warn)}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .aside{display:none}
+  .mbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;gap:14px;padding:10px clamp(16px,4vw,32px) calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line)}
+  .mbar[hidden]{display:none}
+  .mbar .pct{font-family:var(--font-mono);font-size:1.7rem;letter-spacing:-0.03em}
+  .mbar .bl{font-weight:600;color:var(--band)}
+  .mbar .bs{font-size:.78rem;color:var(--muted);line-height:1.2}
+  .mbar .bt{--band:var(--good);display:flex;flex-direction:column;min-width:0}
+  .mbar .bt[data-band="mid"]{--band:var(--warn)} .mbar .bt[data-band="high"]{--band:var(--bad)}
+  .mbar .ring{height:8px;flex:1;background:var(--line);border-radius:6px;overflow:hidden;min-width:60px}
+  .mbar .ring i{display:block;height:100%;background:var(--bg);width:0;transition:width .3s}
+  .res-head{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .num{grid-template-columns:minmax(0,1fr)}
+  .numbox{justify-content:flex-start}
+  .crow{grid-template-columns:minmax(0,1fr)}
+  .axis{padding-left:0}
+  .field{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ecg .scan{animation:none;stroke-dasharray:none;opacity:.9;filter:none}
+  *{transition:none!important}
+}
+</style>
+<style>[hidden]{display:none!important}html{color-scheme:light}body{margin:0}</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <button class="brand" id="brand" aria-label="HeartGuardAI home">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M16 27C6 20.5 3.5 15 3.5 10.6A6.4 6.4 0 0 1 16 8.2a6.4 6.4 0 0 1 12.5 2.4C28.5 15 26 20.5 16 27Z"/>
+        <path d="M5 16h6l2-4 3 8 2.5-6H27" stroke="var(--ink)" stroke-width="1.8"/>
+      </svg>
+      <span>HeartGuard<span class="ai">AI</span></span>
+    </button>
+    <span class="tag">Risk screening · Educational</span>
+  </header>
+
+    <main id="view-cover">
+    <section class="hero">
+      <div class="hero-in">
+        <p class="eyebrow">Heart disease risk screening</p>
+        <h1>HeartGuard<span class="ai">AI</span></h1>
+        <p class="lead">Answer 13 questions about your health, symptoms and test results. HeartGuardAI compares you with 302 real patient records, shows how likely heart disease is, and points to the answers that moved the number.</p>
+        <div class="cta-row">
+          <button class="btn primary" id="start">Start the assessment</button>
+          <button class="btn ghost" id="how-btn">How it works</button>
+        </div>
+      </div>
+      <svg class="ecg" viewBox="0 0 1200 150" preserveAspectRatio="none" aria-hidden="true">
+        <path class="base" id="ecg-base" fill="none" stroke-width="2.5" stroke-linejoin="round"/>
+        <path class="scan" id="ecg-scan" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </section>
+
+    <div class="facts">
+      <div class="fact"><b>302</b><span>unique patients behind the model (1,025 rows, 723 repeats removed)</span></div>
+      <div class="fact"><b>13</b><span>inputs: age, symptoms, blood work and stress-test findings</span></div>
+      <div class="fact"><b id="f-acc">83%</b><span>correct on patients the model had not seen (5×5 cross-validation)</span></div>
+      <div class="fact"><b id="f-auc">0.90</b><span>area under the ROC curve, where 0.5 is a coin flip and 1.0 is perfect</span></div>
+    </div>
+
+    <section class="section" id="how">
+      <h2>How it works</h2>
+      <div class="how">
+        <div><h3>Answer in four short steps</h3><p>Profile, chest symptoms, vitals and blood, then heart tests. Every question explains what it means and what a typical value looks like.</p></div>
+        <div><h3>Watch the meter move</h3><p>A logistic regression model trained on the dataset updates after every answer, right in your browser. Nothing you enter leaves this page.</p></div>
+        <div><h3>See what drove the result</h3><p>The results page ranks every answer by how much it pushed the estimate up or down compared with an average patient.</p></div>
+      </div>
+      <details class="about">
+        <summary>About the model and the data</summary>
+        <ul>
+          <li>Source: the 14-column heart disease table you provided (age, sex, chest pain type, blood pressure, cholesterol, and so on).</li>
+          <li>The file holds 1,025 rows but only 302 distinct patients. Exact repeats were removed before training so that test scores are not inflated by the model seeing the same patient twice.</li>
+          <li>In this file, <span class="mono">target = 1</span> marks patients <em>without</em> disease (164 of 302, matching the original clinical study). HeartGuardAI reverses it, so the percentage always means likelihood of disease.</li>
+          <li>Several category codes are numbered differently from the common online description. Labels here follow the counts in your data, for example chest pain code 0 is "no symptoms" because it is the largest group, as in the original study.</li>
+          <li>Model: standardised numeric inputs, one-hot categories, L2-regularised logistic regression. A random forest scored the same (about 82% accuracy), so the simpler and explainable model was kept.</li>
+        </ul>
+      </details>
+      <p class="disclaimer"><b>Not a diagnosis.</b> HeartGuardAI is a learning project built on a small research dataset. It cannot replace an examination, an ECG or a conversation with a doctor. If you have chest pain, shortness of breath or fainting, seek medical care now.</p>
+    </section>
+  </main>
+
+    <main id="view-app" hidden>
+    <div class="app">
+      <div>
+        <nav class="stepper" id="stepper" aria-label="Assessment steps"></nav>
+        <div class="examples">
+          <span>Try an example:</span>
+          <button class="btn small" data-sample="low">Lower-risk patient</button>
+          <button class="btn small" data-sample="high">Higher-risk patient</button>
+          <button class="btn small ghost" data-sample="default">Reset</button>
+        </div>
+        <div id="panels"></div>
+        <div class="nav">
+          <button class="btn" id="back">Back</button>
+          <button class="btn primary" id="next">Next</button>
+        </div>
+      </div>
+      <aside class="aside" aria-label="Live risk estimate">
+        <div class="card meter-card">
+          <h3>Live estimate</h3>
+          <div class="gauge" aria-live="polite">
+            <svg viewBox="0 0 200 120" aria-hidden="true">
+              <path class="gtrack" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="14" stroke-linecap="round"/>
+              <path class="gfill" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 252"/>
+              <text class="gpct" x="100" y="96" text-anchor="middle">--</text>
+            </svg>
+            <div class="gband">--</div>
+          </div>
+          <p class="sub" style="text-align:center">Chance of heart disease based on your answers so far</p>
+        </div>
+        <div class="card">
+          <h3 class="tag" style="margin-bottom:10px">What is moving it</h3>
+          <ul class="drivers" id="drivers"></ul>
+          <p class="sub" style="margin-top:12px">Starting answers are typical values from the dataset. Replace them with your own.</p>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+    <main id="view-result" hidden></main>
+
+  <footer>HeartGuardAI · educational project · trained on 302 patients · runs entirely in your browser</footer>
+</div>
+
+<div class="mbar" id="mbar" hidden>
+  <div class="gauge bt" data-band="low"><span class="pct">--</span><span class="bl">--</span></div>
+  <div class="ring" aria-hidden="true"><i></i></div>
+</div>
+
+<script>
+const MODEL = {"features": ["age", "trestbps", "chol", "thalach", "oldpeak", "ca", "sex", "fbs", "exang", "cp=1", "cp=2", "cp=3", "restecg=1", "restecg=2", "slope=1", "slope=2", "thal=1", "thal=2", "thal=3"], "mean": [54.420529801324506, 131.60264900662253, 246.5, 149.56953642384107, 1.0430463576158946, 0.7185430463576159, 0.6821192052980133, 0.1490066225165563, 0.32781456953642385, 0.16556291390728478, 0.2847682119205298, 0.076158940397351, 0.5, 0.013245033112582781, 0.46357615894039733, 0.46688741721854304, 0.059602649006622516, 0.5463576158940397, 0.38741721854304634], "scale": [9.032977242582094, 17.534291651254147, 51.66773302324759, 22.865576062265934, 1.1595277603360976, 1.0050800747981627, 0.46565286970190545, 0.35609499991261423, 0.46941684837260855, 0.37168781987820604, 0.4513039745006831, 0.2652522501222255, 0.5, 0.11432236093796108, 0.49867153899382133, 0.4989023520304758, 0.23674917790356856, 0.4978463331677963, 0.48716025835387583], "coef": [-0.00070621805639909, 0.26744179508050697, 0.17889899959017344, -0.35749933168213194, 0.4852766864484489, 0.7944284152345962, 0.6108176294861879, -0.062427833389556826, 0.3611612427976004, -0.33444455448859334, -0.7557909429682544, -0.46553631323580963, -0.2525201008885806, 0.02969181866722347, 0.2891798783778444, -0.1517163514089514, -0.15437722506378834, -0.4017685560502403, 0.26610885394635736], "intercept": -0.16342284745301422, "meta": {"n_raw": 1025, "n_unique": 302, "prevalence": 0.45695364238410596, "acc": 0.8270819672131148, "auc": 0.9046683100849766}, "stats": {"age": {"min": 29.0, "max": 77.0, "mean": 54.420529801324506}, "trestbps": {"min": 94.0, "max": 200.0, "mean": 131.60264900662253}, "chol": {"min": 126.0, "max": 564.0, "mean": 246.5}, "thalach": {"min": 71.0, "max": 202.0, "mean": 149.56953642384107}, "oldpeak": {"min": 0.0, "max": 6.2, "mean": 1.0430463576158941}, "ca": {"min": 0.0, "max": 4.0, "mean": 0.7185430463576159}}};
+const FIELD_FEATURES = {age:['age'],trestbps:['trestbps'],chol:['chol'],thalach:['thalach'],oldpeak:['oldpeak'],ca:['ca'],sex:['sex'],fbs:['fbs'],exang:['exang'],cp:['cp=1','cp=2','cp=3'],restecg:['restecg=1','restecg=2'],slope:['slope=1','slope=2'],thal:['thal=1','thal=2','thal=3']};
+function featureValue(name,a){
+  if(name.indexOf('=')>-1){const kv=name.split('=');return Number(a[kv[0]])===Number(kv[1])?1:0;}
+  return Number(a[name]);
+}
+function score(a){
+  let logit=MODEL.intercept;const parts={};
+  MODEL.features.forEach(function(f,i){
+    const z=(featureValue(f,a)-MODEL.mean[i])/MODEL.scale[i];
+    const c=MODEL.coef[i]*z;logit+=c;
+    const key=f.split('=')[0];parts[key]=(parts[key]||0)+c;
+  });
+  return {p:1/(1+Math.exp(-logit)),parts:parts};
+}
+const YESNO=[{v:0,label:'No'},{v:1,label:'Yes'}];
+const FIELDS={
+  age:{label:'Age',code:'age',kind:'num',unit:'years',min:20,max:90,inc:1,train:[29,77],typical:'Dataset average 54',
+    help:'Risk climbs with age. The patients in the data are between <b>29 and 77</b>.'},
+  sex:{label:'Sex',code:'sex',kind:'choice',options:[{v:0,label:'Female'},{v:1,label:'Male'}],
+    help:'Biological sex as recorded in the study. The two groups have different rates of confirmed disease in this data, so the model treats them separately.'},
+  cp:{label:'Chest pain type',code:'cp',kind:'choice',options:[
+      {v:0,label:'No symptoms',desc:'No chest pain (asymptomatic)'},
+      {v:1,label:'Atypical angina',desc:'Fits only part of the angina pattern'},
+      {v:2,label:'Non-anginal pain',desc:'Pain with another likely cause, such as muscle or stomach'},
+      {v:3,label:'Typical angina',desc:'Pressure or tightness on effort, eased by rest'}],
+    help:'The kind of chest discomfort, if any. <b>Surprising but real:</b> many confirmed cases in this data reported no chest pain at all, because these patients were already being tested. No pain does not rule out heart disease.'},
+  exang:{label:'Chest pain during exercise',code:'exang',kind:'choice',options:YESNO,
+    help:'Did exercise on a treadmill or bike bring on chest pain (exercise-induced angina)? A yes suggests the heart muscle is short of blood during effort.'},
+  trestbps:{label:'Resting blood pressure',code:'trestbps',kind:'num',unit:'mmHg',min:80,max:220,inc:1,train:[94,200],typical:'Under 120 is normal, 140 or more is high',
+    help:'The top number (systolic) measured while resting. Persistently high pressure strains the heart and arteries.'},
+  chol:{label:'Cholesterol',code:'chol',kind:'num',unit:'mg/dL',min:100,max:600,inc:1,train:[126,564],typical:'Under 200 is desirable, 240 or more is high',
+    help:'Total cholesterol in the blood. Too much can build up as plaque inside the arteries that feed the heart.'},
+  fbs:{label:'Fasting blood sugar above 120 mg/dL',code:'fbs',kind:'choice',options:YESNO,
+    help:'Measured after at least 8 hours without food. A yes can point to diabetes or pre-diabetes, which damage blood vessels over time.'},
+  restecg:{label:'Resting ECG result',code:'restecg',kind:'choice',options:[
+      {v:1,label:'Normal',desc:'No abnormal findings'},
+      {v:2,label:'ST-T wave abnormality',desc:'Changes after the heartbeat, sometimes from poor blood flow'},
+      {v:0,label:'Left ventricle thickening',desc:'Enlarged heart wall, often from long-term high blood pressure'}],
+    help:'The electrical tracing of your heart recorded while you lie still, read by a doctor.'},
+  thalach:{label:'Highest heart rate reached',code:'thalach',kind:'num',unit:'bpm',min:60,max:210,inc:1,train:[71,202],typical:'A rough ceiling for your age is 220 minus age',
+    help:'The peak heart rate during the exercise stress test. A heart that can climb higher is generally healthier, so a low peak raises the estimate.'},
+  oldpeak:{label:'ST depression during exercise',code:'oldpeak',kind:'num',unit:'mm',min:0,max:6.5,inc:0.1,train:[0,6.2],typical:'0 is ideal, above 2 is notable',
+    help:'How far the ECG line dips below its baseline at peak effort compared with rest. Bigger dips suggest the heart is not getting enough blood.'},
+  slope:{label:'ST segment slope at peak exercise',code:'slope',kind:'choice',options:[
+      {v:2,label:'Upsloping',desc:'Usual in healthy hearts'},
+      {v:1,label:'Flat',desc:'Can signal reduced blood flow'},
+      {v:0,label:'Downsloping',desc:'Most concerning pattern'}],
+    help:'The direction the ECG line takes right after its spike while you are exercising at your hardest.'},
+  ca:{label:'Major vessels narrowed',code:'ca',kind:'choice',options:[{v:0,label:'0',desc:'None'},{v:1,label:'1',desc:'One vessel'},{v:2,label:'2',desc:'Two vessels'},{v:3,label:'3',desc:'Three vessels'}],
+    help:'How many of the three main heart arteries show narrowing on fluoroscopy, an X-ray video taken with contrast dye. More narrowed vessels means higher risk.'},
+  thal:{label:'Thallium stress scan',code:'thal',kind:'choice',options:[
+      {v:2,label:'Normal',desc:'Even blood flow to the heart'},
+      {v:1,label:'Fixed defect',desc:'Permanent poor flow, such as a scar from a past heart attack'},
+      {v:3,label:'Reversible defect',desc:'Poor flow only under stress'}],
+    help:'A nuclear imaging test that shows how well blood reaches the heart muscle at rest and under stress.'}
+};
+const STEPS=[
+  {title:'About you',intro:'Two basics that shape heart risk.',keys:['age','sex']},
+  {title:'Chest symptoms',intro:'What you feel in your chest, at rest and during effort.',keys:['cp','exang']},
+  {title:'Vitals and blood',intro:'Numbers from a routine check-up and a blood test.',keys:['trestbps','chol','fbs']},
+  {title:'Heart tests',intro:'Findings from an ECG, a stress test and heart imaging. If you do not have a result, leave the typical starting answer.',keys:['restecg','thalach','oldpeak','slope','ca','thal']}
+];
+const DEFAULTS={age:54,sex:1,cp:2,exang:0,trestbps:130,chol:245,fbs:0,restecg:1,thalach:150,oldpeak:1.0,slope:1,ca:0,thal:2};
+const SAMPLES={
+  default:DEFAULTS,
+  low:{age:45,sex:0,cp:2,exang:0,trestbps:118,chol:190,fbs:0,restecg:1,thalach:172,oldpeak:0,slope:2,ca:0,thal:2},
+  high:{age:63,sex:1,cp:0,exang:1,trestbps:150,chol:280,fbs:1,restecg:0,thalach:108,oldpeak:3.0,slope:0,ca:2,thal:3}
+};
+const A=Object.assign({},DEFAULTS);
+let stepIdx=0;
+const $=(s,r)=>(r||document).querySelector(s);
+const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));
+function band(p){return p<0.30?{k:'low',t:'Lower likelihood'}:p<0.60?{k:'mid',t:'Moderate likelihood'}:{k:'high',t:'Higher likelihood'};}
+function pctText(p){const v=Math.round(p*100);return v<1?'<1%':v>99?'>99%':v+'%';}
+function fmtVal(key,v){
+  const f=FIELDS[key];
+  if(f.kind==='choice'){const o=f.options.find(o=>o.v===Number(v));return o?(key==='ca'?o.label+' vessel'+(o.v===1?'':'s'):o.label):String(v);}
+  return (f.inc<1?Number(v).toFixed(1):Math.round(v))+' '+f.unit;
+}
+(function ecg(){
+  let d='M0 95',x=0;
+  const W=1200,beatW=230;let y=95;
+  while(x<W){
+    let bx=x;
+    d+=' L'+(bx+30)+' 95';
+    d+=' Q'+(bx+42)+' 80 '+(bx+54)+' 95';        
+    d+=' L'+(bx+80)+' 95 L'+(bx+88)+' 108';      
+    d+=' L'+(bx+104)+' 12';                       
+    d+=' L'+(bx+120)+' 128';                      
+    d+=' L'+(bx+130)+' 95';
+    d+=' L'+(bx+156)+' 95 Q'+(bx+174)+' 66 '+(bx+192)+' 95'; 
+    d+=' L'+(bx+beatW)+' 95';
+    x+=beatW;
+  }
+  $('#ecg-base').setAttribute('d',d);$('#ecg-scan').setAttribute('d',d);
+})();
+function buildForm(){
+  const stepper=$('#stepper'),panels=$('#panels');
+  STEPS.forEach(function(s,i){
+    const b=document.createElement('button');b.className='step';b.dataset.i=i;
+    b.innerHTML='<small>Step '+(i+1)+' of '+STEPS.length+'</small><b>'+s.title+'</b>';
+    b.addEventListener('click',()=>goStep(i));stepper.appendChild(b);
+    const p=document.createElement('section');p.className='panel';p.id='panel-'+i;p.hidden=true;
+    p.innerHTML='<h2>'+s.title+'</h2><p class="intro">'+s.intro+'</p>'+s.keys.map(fieldHTML).join('');
+    panels.appendChild(p);
+  });
+  $$('input[type=radio]').forEach(r=>r.addEventListener('change',function(){A[r.name]=Number(r.value);update();}));
+  Object.keys(FIELDS).filter(k=>FIELDS[k].kind==='num').forEach(function(k){
+    const rg=$('#r-'+k),nb=$('#n-'+k),f=FIELDS[k];
+    rg.addEventListener('input',function(){A[k]=parseFloat(rg.value);nb.value=fmtNum(k,A[k]);update();});
+    nb.addEventListener('input',function(){const v=parseFloat(nb.value);if(!isNaN(v)){A[k]=Math.min(f.max,Math.max(f.min,v));rg.value=A[k];update();}});
+    nb.addEventListener('change',function(){nb.value=fmtNum(k,A[k]);});
+  });
+}
+function fmtNum(k,v){return FIELDS[k].inc<1?Number(v).toFixed(1):String(Math.round(v));}
+function fieldHTML(key){
+  const f=FIELDS[key];let body='';
+  if(f.kind==='choice'){
+    body='<div class="choices" role="radiogroup" aria-labelledby="lbl-'+key+'">'+f.options.map(function(o){
+      return '<label class="choice"><input type="radio" name="'+key+'" value="'+o.v+'" id="o-'+key+'-'+o.v+'"><span class="box"><b>'+o.label+'</b>'+(o.desc?'<small>'+o.desc+'</small>':'')+'</span></label>';
+    }).join('')+'</div>';
+  }else{
+    body='<div class="num"><input type="range" id="r-'+key+'" min="'+f.min+'" max="'+f.max+'" step="'+f.inc+'" aria-labelledby="lbl-'+key+'">'+
+      '<div class="numbox"><input type="number" id="n-'+key+'" inputmode="decimal" min="'+f.min+'" max="'+f.max+'" step="'+f.inc+'" aria-labelledby="lbl-'+key+'"><span class="u">'+f.unit+'</span></div></div>'+
+      '<div class="hints"><span>'+f.typical+'</span><span class="warn" id="w-'+key+'" hidden>Outside the '+f.train[0]+' to '+f.train[1]+' seen in the data, so the estimate is less reliable.</span></div>';
+  }
+  return '<div class="field" id="field-'+key+'"><div class="field-head"><span class="lbl" id="lbl-'+key+'">'+f.label+'</span><span class="code">'+f.code+'</span></div><p class="help">'+f.help+'</p>'+body+'</div>';
+}
+function syncInputs(){
+  Object.keys(FIELDS).forEach(function(k){
+    const f=FIELDS[k];
+    if(f.kind==='choice'){const r=$('#o-'+k+'-'+A[k]);if(r)r.checked=true;}
+    else{$('#r-'+k).value=A[k];$('#n-'+k).value=fmtNum(k,A[k]);}
+  });
+}
+function setGauge(root,p){
+  const b=band(p),len=251.3;
+  root.dataset.band=b.k;
+  const fill=$('.gfill',root);if(fill)fill.setAttribute('stroke-dasharray',(len*p).toFixed(1)+' '+len);
+  const t=$('.gpct',root);if(t)t.textContent=pctText(p);
+  const bl=$('.gband',root);if(bl)bl.textContent=b.t;
+}
+function driversOf(parts){
+  const arr=Object.keys(parts).map(k=>({k:k,c:parts[k]}));
+  return {up:arr.filter(e=>e.c>0.15).sort((a,b)=>b.c-a.c).slice(0,3),down:arr.filter(e=>e.c<-0.15).sort((a,b)=>a.c-b.c).slice(0,3)};
+}
+function update(){
+  const r=score(A),b=band(r.p);
+  setGauge($('.aside .gauge'),r.p);
+  const mb=$('#mbar .bt');mb.dataset.band=b.k;$('.pct',mb).textContent=pctText(r.p);$('.bl',mb).textContent=b.t;
+  const ring=$('#mbar .ring i');ring.style.width=(r.p*100)+'%';ring.style.background='var(--'+(b.k==='low'?'good':b.k==='mid'?'warn':'bad')+')';
+  const d=driversOf(r.parts);let h='';
+  d.up.forEach(e=>h+='<li><span class="dot up"></span>'+FIELDS[e.k].label+' <span class="sub">raises it</span></li>');
+  d.down.forEach(e=>h+='<li><span class="dot down"></span>'+FIELDS[e.k].label+' <span class="sub">lowers it</span></li>');
+  $('#drivers').innerHTML=h||'<li class="sub">Close to the average patient so far.</li>';
+  Object.keys(FIELDS).forEach(function(k){
+    const f=FIELDS[k];if(f.kind!=='num')return;
+    $('#w-'+k).hidden=!(A[k]<f.train[0]||A[k]>f.train[1]);
+  });
+}
+function show(view){
+  ['cover','app','result'].forEach(v=>$('#view-'+v).hidden=(v!==view));
+  $('#mbar').hidden=(view!=='app');
+  document.body.classList.toggle('has-bar',view==='app');
+  window.scrollTo({top:0,behavior:'auto'});
+}
+function goStep(i){
+  stepIdx=i;
+  $$('.panel').forEach((p,j)=>p.hidden=(j!==i));
+  $$('.step').forEach(function(s,j){
+    if(j===i)s.setAttribute('aria-current','step');else s.removeAttribute('aria-current');
+    s.classList.toggle('done',j<i);
+  });
+  $('#back').style.visibility=i===0?'hidden':'visible';
+  $('#next').textContent=i===STEPS.length-1?'See my results':'Next: '+STEPS[i+1].title;
+  const cur=$('.step[aria-current]');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'nearest',inline:'center'});
+  if($('#view-app').hidden)show('app');
+}
+function summaryText(r){
+  const lines=['HeartGuardAI estimate: '+pctText(r.p)+' ('+band(r.p).t.toLowerCase()+')',''];
+  Object.keys(FIELDS).forEach(k=>lines.push(FIELDS[k].label+': '+fmtVal(k,A[k])));
+  lines.push('','Educational estimate from a 302-patient dataset. Not a diagnosis.');
+  return lines.join('\n');
+}
+function suggestionsHTML(a,p){
+  const g={doctor:[],numbers:[],habits:[]};
+  const add=function(k,t,x){g[k].push('<li><b>'+t+'</b><span>'+x+'</span></li>');};
+  const age=Number(a.age),bp=Number(a.trestbps),ch=Number(a.chol),hr=Number(a.thalach);
+  if(p>=0.6)add('doctor','Book a cardiology review soon','Your answers resemble patients with confirmed heart disease. Ask your doctor for a review within the next few weeks. For chest pain at rest, breathlessness or fainting, go straight to emergency care.');
+  else if(p>=0.3)add('doctor','Discuss your results at your next check-up','Your estimate is in a middle range. A doctor can say which of your numbers deserve follow-up.');
+  else add('doctor','Keep up routine check-ups','Your estimate is low. Repeat blood pressure, cholesterol and blood sugar checks every year or two, or as your doctor advises.');
+  if(Number(a.cp)===3||Number(a.exang)===1)add('doctor','Get exercise-related chest pain checked','Pressure or pain that comes on with effort should be assessed, even if it settles with rest.');
+  const f=[];
+  if(Number(a.oldpeak)>=2)f.push('a large ST depression');
+  if(Number(a.slope)===0)f.push('a downsloping ST segment');
+  if(Number(a.ca)>=1)f.push('narrowed vessels');
+  if(Number(a.thal)!==2)f.push('a thallium scan defect');
+  if(Number(a.restecg)!==1)f.push('an abnormal resting ECG');
+  if(f.length)add('doctor','Ask about your heart test findings','You entered '+f.join(', ')+'. Ask a cardiologist what each one means for you and whether further tests are needed.');
+  if(bp>=140)add('numbers','Blood pressure is high','Readings of 140 or more at rest need treatment advice. Cutting salt, losing excess weight and regular exercise all help.');
+  else if(bp>=130)add('numbers','Blood pressure is raised','Aim for under 120. Less salt, more activity and a home blood pressure monitor are good first steps.');
+  if(ch>=240)add('numbers','Cholesterol is high','Ask for a full lipid panel. Fibre, nuts, fish and fewer fried and processed foods help, and your doctor may suggest medicine.');
+  else if(ch>=200)add('numbers','Cholesterol is borderline','Aim for under 200. Swap saturated fats for olive oil, nuts and fish, and recheck in a few months.');
+  if(Number(a.fbs)===1)add('numbers','Fasting blood sugar is above 120','Ask for an HbA1c test to check for diabetes or pre-diabetes. Both raise heart risk if left untreated.');
+  if(hr<0.75*(220-age))add('numbers','Peak heart rate was low for your age','A peak well under 220 minus your age can reflect low fitness or heart limits. Build exercise up gradually with your doctor.');
+  if(!g.numbers.length)add('numbers','Your blood pressure, cholesterol and blood sugar answers look healthy','Keep them there with the habits below and yearly checks.');
+  add('habits','Move most days','Aim for 150 minutes a week of brisk walking, cycling or swimming.');
+  add('habits','Eat for your heart','Build meals around vegetables, fruit, pulses, whole grains and fish. Limit sugary drinks and processed meat.');
+  add('habits','Avoid tobacco and limit alcohol','Quitting smoking is the single biggest change for heart health. Sleep 7 to 8 hours and keep stress in check.');
+  const titles={doctor:'Talk to a doctor',numbers:'Numbers to work on',habits:'Everyday habits'};
+  return '<section class="card chart-card"><h3>Suggestions for you</h3><p class="sub">General guidance matched to your answers. It does not replace medical advice.</p>'+
+    Object.keys(g).filter(function(k){return g[k].length;}).map(function(k){return '<div class="sg sg-'+k+'"><h4>'+titles[k]+'</h4><ul>'+g[k].join('')+'</ul></div>';}).join('')+'</section>';
+}
+function renderResult(){
+  const r=score(A),b=band(r.p),base=1/(1+Math.exp(-MODEL.intercept));
+  const entries=Object.keys(r.parts).map(k=>({k:k,c:r.parts[k]})).sort((x,y)=>Math.abs(y.c)-Math.abs(x.c));
+  const mx=Math.max.apply(null,entries.map(e=>Math.abs(e.c)))||1;
+  const d=driversOf(r.parts);
+  const names=a=>a.map(e=>FIELDS[e.k].label.toLowerCase()).join(', ');
+  let story='Compared with the average patient in the data ('+pctText(base)+'), your answers '+(r.p>base?'push the estimate up':'pull the estimate down')+'.';
+  if(d.up.length)story+=' Biggest upward pushes: '+names(d.up.slice(0,2))+'.';
+  if(d.down.length)story+=' Biggest reassurance: '+names(d.down.slice(0,2))+'.';
+  const rows=entries.map(function(e){
+    const w=(Math.abs(e.c)/mx*50).toFixed(1),up=e.c>0;
+    return '<li class="crow"><div class="cl"><span class="cn">'+FIELDS[e.k].label+'</span><span class="cv">'+fmtVal(e.k,A[e.k])+'</span></div>'+
+      '<div class="ctrack" role="img" aria-label="'+FIELDS[e.k].label+' '+(up?'raises':'lowers')+' the estimate"><i class="cbar '+(up?'up':'down')+'" style="width:'+w+'%"></i></div></li>';
+  }).join('');
+  const answers=Object.keys(FIELDS).map(k=>'<li><span>'+FIELDS[k].label+'</span><span>'+fmtVal(k,A[k])+'</span></li>').join('');
+  const out=[];
+  Object.keys(FIELDS).forEach(function(k){const f=FIELDS[k];if(f.kind==='num'&&(A[k]<f.train[0]||A[k]>f.train[1]))out.push(f.label.toLowerCase());});
+  $('#view-result').innerHTML=
+   '<section class="card"><div class="res-head"><div class="gauge" data-band="'+b.k+'"><svg viewBox="0 0 200 120" aria-hidden="true"><path class="gtrack" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="14" stroke-linecap="round"/><path class="gfill" d="M20 100 A80 80 0 0 1 180 100" fill="none" stroke-width="14" stroke-linecap="round" stroke-dasharray="0 252"/><text class="gpct" x="100" y="96" text-anchor="middle">--</text></svg><div class="gband"></div><p class="sub" style="margin-top:4px">Average patient in the data: '+pctText(base)+'</p></div>'+
+   '<div><p class="eyebrow">Your estimate</p><h2>'+b.t+' of heart disease</h2><p>'+story+'</p>'+
+   (out.length?'<p class="sub" style="margin-top:10px;color:var(--warn)">Some answers ('+out.join(', ')+') fall outside the range of the training data, so treat the number with extra caution.</p>':'')+
+   '</div></div></section>'+
+   '<section class="card chart-card"><h3>What moved your number</h3><p class="sub">Each bar shows how far one answer pushes the estimate away from an average patient. Bars to the right raise it, bars to the left lower it.</p>'+
+   '<div class="axis" aria-hidden="true"><span>Lowers</span><span>Raises</span></div><ul class="clist">'+rows+'</ul>'+
+   '<p class="sub">Blood pressure, cholesterol and blood sugar can be changed with treatment and lifestyle. Ask a clinician which of your numbers to work on first.</p></section>'+
+   '<section class="card chart-card"><h3>Your answers</h3><ul class="answers">'+answers+'</ul>'+
+   '<div class="actions"><button class="btn" id="edit">Edit answers</button><button class="btn" id="copy">Copy summary</button><button class="btn ghost" id="restart">Start over</button><span class="toast" id="toast" role="status"></span></div></section>'+
+   suggestionsHTML(A,r.p)+'<p class="disclaimer" style="margin-top:18px"><b>Not a diagnosis.</b> This estimate comes from a small research dataset and a simple model ('+Math.round(MODEL.meta.acc*100)+'% accuracy on unseen patients). A normal result does not mean your heart is healthy, and a high one does not mean you have disease. Share your real test results with a doctor.</p>';
+  setGauge($('#view-result .gauge'),r.p);
+  $('#edit').addEventListener('click',()=>{goStep(STEPS.length-1);});
+  $('#restart').addEventListener('click',()=>{Object.assign(A,DEFAULTS);syncInputs();update();goStep(0);});
+  $('#copy').addEventListener('click',function(){
+    const txt=summaryText(r),t=$('#toast');
+    function ok(){t.textContent='Summary copied';setTimeout(()=>t.textContent='',2200);}
+    function fallback(){const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){t.textContent='Select and copy manually';}ta.remove();}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,fallback);else fallback();
+  });
+}
+$('#f-acc').textContent=Math.round(MODEL.meta.acc*100)+'%';
+$('#f-auc').textContent=MODEL.meta.auc.toFixed(2);
+buildForm();syncInputs();update();
+$('#start').addEventListener('click',()=>goStep(0));
+$('#brand').addEventListener('click',()=>show('cover'));
+$('#how-btn').addEventListener('click',()=>{const h=$('#how');h.scrollIntoView({behavior:'smooth',block:'start'});});
+$('#back').addEventListener('click',()=>goStep(Math.max(0,stepIdx-1)));
+$('#next').addEventListener('click',function(){
+  if(stepIdx<STEPS.length-1)goStep(stepIdx+1);else{renderResult();show('result');}
+});
+$$('[data-sample]').forEach(b=>b.addEventListener('click',function(){Object.assign(A,SAMPLES[b.dataset.sample]);syncInputs();update();}));
+</script>
+</body>
+</html>
